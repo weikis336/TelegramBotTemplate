@@ -1,43 +1,44 @@
 const TelegramBot = require('node-telegram-bot-api')
 
 class TelegramService {
-  constructor (telegramToken, chatId = null) {
+  constructor (telegramToken) {
     this.token = telegramToken
-    this.chatId = chatId
     this.bot = new TelegramBot(this.token, { polling: true })
+    this.redisClient = null
 
     this.bot.onText(/\/captura/, async (msg) => {
-      const chatId = this.chatId || msg.chat.id
-      console.log("captura")
-      // const message = msg.text.replace('/captura','')
-      // await this.screenshoot();
+      const chatId = msg.chat.id
+      const data = { chatId }
+
+      this.redisClient.publish('new-snapshot', JSON.stringify(data))
     });
 
-    this.bot.on('message', async (msg) => {
-      const chatId = this.chatId || msg.chat.id
+    // this.bot.on('message', async (msg) => {
+    //   const chatId = this.chatId || msg.chat.id
 
-      console.log(msg.txt)
-
-      if (msg.photo) {
-        
-        await this.analyzeImage(msg, chatId)
-      }
-    })
+    //   if (msg.photo) {  
+    //     await this.analyzeImage(msg, chatId)
+    //   }
+    // })
   }
 
-  async sendAdminMessage (message) {
-    try {
-      await this.bot.sendMessage(this.chatId, message)
-      
-    } catch (error) {
-      console.error('Error al enviar el mensaje:', error)
-    }
+  async setRedisClient(redisClient){
+    this.redisClient = redisClient
   }
 
   async sendMessage (chatId, message) {
     try {
       
       await this.bot.sendMessage(chatId, message)
+    } catch (error) {
+      console.error('Error al enviar el mensaje:', error)
+    }
+  }
+
+  async sendPhoto (chatId, filename) {
+    try {
+      
+      await this.bot.sendPhoto(chatId, filename )
     } catch (error) {
       console.error('Error al enviar el mensaje:', error)
     }
